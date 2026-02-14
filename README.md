@@ -6,7 +6,7 @@
 
 **Screen color picker for Windows**
 
-Pick any color from your screen instantly with a keyboard shortcut.
+Pick any color from anywhere on your screen — not just browsers, not just apps.
 
 [![Release](https://img.shields.io/github/v/release/AleenaTahir1/ColorSnap)](https://github.com/AleenaTahir1/ColorSnap/releases)
 [![Build](https://img.shields.io/github/actions/workflow/status/AleenaTahir1/ColorSnap/ci.yml)](https://github.com/AleenaTahir1/ColorSnap/actions)
@@ -16,11 +16,17 @@ Pick any color from your screen instantly with a keyboard shortcut.
 
 ---
 
-## Why ColorSnap
+## Built for Designers
 
-Most color pickers need you to open a separate app, navigate menus, or use a browser extension. That's too many steps for something that should be instant.
+You work with colors all day. Matching a client's brand color from a PDF. Grabbing that exact blue from a competitor's website. Sampling a shade from an image in Photoshop. Finding the perfect accent from a Dribbble shot.
 
-ColorSnap runs quietly in your system tray. Press `Win+Shift+C` and pick any color from anywhere on your screen. The value is copied to your clipboard automatically.
+**The problem?** Browser extensions only work in browsers. Figma's eyedropper only works in Figma. Every tool is trapped in its own sandbox.
+
+**ColorSnap breaks that wall.**
+
+Press `Win+Shift+C` and pick any color from anywhere — your desktop wallpaper, a video playing in VLC, a color in an email, a pixel in a game. Anywhere. The hex code is instantly copied to your clipboard.
+
+No switching apps. No screenshots. No color conversion tools. Just point and pick.
 
 ---
 
@@ -32,13 +38,13 @@ ColorSnap runs quietly in your system tray. Press `Win+Shift+C` and pick any col
 
 ## Features
 
-- **Instant pick** — Press `Win+Shift+C` to pick a color from anywhere on screen
+- **Pick from anywhere** — Not limited to browsers or specific apps. Any pixel on your screen is fair game.
+- **Instant hotkey** — Press `Win+Shift+C` from any app, anytime
 - **Multiple formats** — Copy as HEX, RGB, or HSL with one click
 - **Color history** — All picked colors are saved and browsable
 - **Auto-copy** — Color values are copied to clipboard automatically
-- **Custom cursor** — Visual feedback with a branded cursor during pick mode
-- **System tray** — Runs quietly in the background
-- **Dark theme** — Clean, minimal dark UI
+- **System tray** — Runs quietly in the background, always ready
+- **Dark theme** — Clean, minimal UI that stays out of your way
 
 ---
 
@@ -51,24 +57,30 @@ Download the latest release from the [Releases](https://github.com/AleenaTahir1/
 
 ---
 
-## Usage
+## How to Use
+
+1. **Click "Pick a Color"** or press `Win+Shift+C`
+2. **App hides** so you can see your full screen
+3. **Move your cursor** to any color you want
+4. **Press `Win+Shift+C` again** to capture the color
+5. **Color is copied** to your clipboard automatically
+
+Press `Esc` to cancel pick mode without capturing.
 
 ### Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
-| `Win+Shift+C` | Pick a color from screen |
+| `Win+Shift+C` | Start pick mode / Capture color |
 | `Esc` | Cancel pick mode |
 
 ### Color Formats
 
-Click any color from history to view all format values:
+Right-click any color from history to copy in different formats:
 
 - **HEX** — `#3B82F6`
 - **RGB** — `rgb(59, 130, 246)`
 - **HSL** — `hsl(217, 91%, 60%)`
-
-Each format row is individually copyable.
 
 ---
 
@@ -107,7 +119,8 @@ ColorSnap/
 ├── src-tauri/              # Backend (Rust)
 │   ├── src/
 │   │   ├── lib.rs          # App setup, commands, tray
-│   │   └── color_picker.rs # Screen capture, cursor, pick logic
+│   │   ├── color_picker.rs # Screen capture, pixel reading
+│   │   └── storage.rs      # Color history persistence
 │   └── capabilities/       # Tauri 2 permissions
 └── package.json
 ```
@@ -118,7 +131,7 @@ ColorSnap/
 
 - **Frontend** — React 18, TypeScript, Tailwind CSS
 - **Backend** — Rust, Tauri 2
-- **Screen Capture** — xcap
+- **Screen Capture** — Windows GDI API, xcap
 - **Build** — Vite
 
 ---

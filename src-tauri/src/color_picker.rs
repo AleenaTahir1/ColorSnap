@@ -9,13 +9,12 @@ static CURSOR_CHANGED: AtomicBool = AtomicBool::new(false);
 use windows::Win32::{
     Foundation::{COLORREF, POINT},
     Graphics::Gdi::{
-        CreateBitmap, CreateDIBSection, DeleteObject, GetDC, GetPixel, ReleaseDC,
-        BITMAPINFO, BITMAPINFOHEADER, CLR_INVALID, DIB_RGB_COLORS,
+        CreateBitmap, CreateDIBSection, DeleteObject, GetDC, GetPixel, ReleaseDC, BITMAPINFO,
+        BITMAPINFOHEADER, CLR_INVALID, DIB_RGB_COLORS,
     },
     UI::WindowsAndMessaging::{
-        CreateIconIndirect, GetCursorPos, SetSystemCursor, SystemParametersInfoW,
-        HCURSOR, ICONINFO, OCR_NORMAL, SPI_SETCURSORS,
-        SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS,
+        CreateIconIndirect, GetCursorPos, SetSystemCursor, SystemParametersInfoW, HCURSOR,
+        ICONINFO, OCR_NORMAL, SPI_SETCURSORS, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS,
     },
 };
 
@@ -101,21 +100,15 @@ pub fn set_pick_cursor() {
         bmi.bmiHeader.biCompression = 0; // BI_RGB
 
         let mut bits_ptr: *mut c_void = std::ptr::null_mut();
-        let color_bmp = match CreateDIBSection(
-            hdc_screen,
-            &bmi,
-            DIB_RGB_COLORS,
-            &mut bits_ptr,
-            None,
-            0,
-        ) {
-            Ok(bmp) => bmp,
-            Err(e) => {
-                eprintln!("Failed to create DIB section: {}", e);
-                ReleaseDC(None, hdc_screen);
-                return;
-            }
-        };
+        let color_bmp =
+            match CreateDIBSection(hdc_screen, &bmi, DIB_RGB_COLORS, &mut bits_ptr, None, 0) {
+                Ok(bmp) => bmp,
+                Err(e) => {
+                    eprintln!("Failed to create DIB section: {}", e);
+                    ReleaseDC(None, hdc_screen);
+                    return;
+                }
+            };
 
         if bits_ptr.is_null() {
             eprintln!("DIB section bits pointer is null");

@@ -49,10 +49,7 @@ fn capture_zoom_preview(size: u32) -> Result<ZoomPreviewData, String> {
 }
 
 #[tauri::command]
-async fn save_color_history(
-    app: tauri::AppHandle,
-    colors: Vec<ColorEntry>,
-) -> Result<(), String> {
+async fn save_color_history(app: tauri::AppHandle, colors: Vec<ColorEntry>) -> Result<(), String> {
     storage::save_color_history(&app, &colors).await
 }
 
@@ -172,20 +169,21 @@ pub fn run() {
 
                     // Escape to cancel pick mode
                     let escape_shortcut = Shortcut::new(None, Code::Escape);
-                    if shortcut == &escape_shortcut && event.state == ShortcutState::Pressed {
-                        if PICK_MODE_ACTIVE.load(Ordering::SeqCst) {
-                            PICK_MODE_ACTIVE.store(false, Ordering::SeqCst);
+                    if shortcut == &escape_shortcut
+                        && event.state == ShortcutState::Pressed
+                        && PICK_MODE_ACTIVE.load(Ordering::SeqCst)
+                    {
+                        PICK_MODE_ACTIVE.store(false, Ordering::SeqCst);
 
-                            // Restore default cursor
-                            color_picker::restore_default_cursor();
+                        // Restore default cursor
+                        color_picker::restore_default_cursor();
 
-                            let _ = app.emit("pick-mode-stopped", ());
+                        let _ = app.emit("pick-mode-stopped", ());
 
-                            // Show window
-                            if let Some(window) = app.get_webview_window("main") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+                        // Show window
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
                         }
                     }
                 })
@@ -202,7 +200,8 @@ pub fn run() {
 
             // Setup system tray
             let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let pick_item = MenuItem::with_id(app, "pick", "Pick Color (Win+Shift+C)", true, None::<&str>)?;
+            let pick_item =
+                MenuItem::with_id(app, "pick", "Pick Color (Win+Shift+C)", true, None::<&str>)?;
             let show_item = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
 
             let menu = Menu::with_items(app, &[&pick_item, &show_item, &quit_item])?;

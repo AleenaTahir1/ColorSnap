@@ -37,8 +37,8 @@ pub async fn load_color_history(app: &tauri::AppHandle) -> Result<Vec<ColorEntry
         return Ok(Vec::new());
     }
 
-    let json =
-        std::fs::read_to_string(&path).map_err(|e| format!("Failed to read history file: {}", e))?;
+    let json = std::fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read history file: {}", e))?;
 
     let colors: Vec<ColorEntry> =
         serde_json::from_str(&json).map_err(|e| format!("Failed to parse history file: {}", e))?;

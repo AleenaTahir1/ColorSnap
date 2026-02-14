@@ -33,9 +33,23 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Type check and build frontend
+      - name: Generate icons
+        run: npm run icons
+
+      - name: Type check frontend
+        run: npx tsc --noEmit
+
+      - name: Build frontend
         run: npm run build
 
-      - name: Check Rust
+      - name: Check Rust formatting
+        working-directory: src-tauri
+        run: cargo fmt --check
+
+      - name: Clippy lint
+        working-directory: src-tauri
+        run: cargo clippy -- -D warnings
+
+      - name: Check Rust compiles
         working-directory: src-tauri
         run: cargo check

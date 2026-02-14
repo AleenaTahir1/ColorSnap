@@ -17,8 +17,7 @@ if (!fs.existsSync(iconsDir)) {
 
 const sizes = [
   { name: '32x32.png', size: 32 },
-  { name: '48x48.png', size: 48 },
-  { name: '64x64.png', size: 64 },
+  { name: '64x64.png', size: 64 },  // For custom cursor
   { name: '128x128.png', size: 128 },
   { name: '128x128@2x.png', size: 256 },
   { name: 'icon.png', size: 512 },
@@ -26,7 +25,7 @@ const sizes = [
 
 async function generateIcons() {
   const svgBuffer = fs.readFileSync(svgPath);
-
+  
   for (const { name, size } of sizes) {
     const outputPath = path.join(iconsDir, name);
     await sharp(svgBuffer)
@@ -35,19 +34,13 @@ async function generateIcons() {
       .toFile(outputPath);
     console.log(`Generated ${name}`);
   }
-
-  // Generate multi-resolution ICO file (Windows)
-  const icoSources = [
-    path.join(iconsDir, '32x32.png'),
-    path.join(iconsDir, '48x48.png'),
-    path.join(iconsDir, '64x64.png'),
-    path.join(iconsDir, '128x128.png'),
-    path.join(iconsDir, '128x128@2x.png'),
-  ];
-  const icoBuffer = await pngToIco(icoSources);
+  
+  // Generate ICO file (Windows) from 256x256 PNG
+  const png256Path = path.join(iconsDir, '128x128@2x.png');
+  const icoBuffer = await pngToIco([png256Path]);
   fs.writeFileSync(path.join(iconsDir, 'icon.ico'), icoBuffer);
-  console.log('Generated icon.ico (multi-resolution)');
-
+  console.log('Generated icon.ico');
+  
   console.log('Icon generation complete!');
 }
 

@@ -12,7 +12,7 @@ const appWindow = getCurrentWindow();
 
 function App() {
   const [displayColor, setDisplayColor] = useState<{ hex: string; rgb: [number, number, number] } | null>(null);
-  const [format, setFormat] = useState<ColorFormat>("hex");
+  const [format] = useState<ColorFormat>("hex");
   const [copied, setCopied] = useState(false);
   const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
