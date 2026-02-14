@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run tauri:*)",
+      "Bash(cargo clean:*)",
+      "Bash(ls:*)",
+      "Bash(taskkill:*)",
+      "Bash(node scripts/generate-icons.mjs:*)",
+      "Bash(git init:*)",
+      "Bash(git branch:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(where:*)",
+      "Bash(winget install:*)",
+      "Bash(export PATH=\"/c/Program Files/GitHub CLI:$PATH\")",
+      "Bash(gh auth:*)"
+    ]
+  }
+}

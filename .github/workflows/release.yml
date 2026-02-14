@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # First: check if this version already has a release
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if version tag exists
+        id: check
+        run: |
+          VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "::notice::Tag v$VERSION already exists — skipping release"
+          else
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "::notice::New version v$VERSION detected — will build and release"
+          fi
+
+  # Second: build and release only if version is new
+  release:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'ColorSnap v__VERSION__'
+          releaseBody: |
+            ## ColorSnap v__VERSION__
+
+            Download the installer below to get started.
+
+            ### Installation
+            - **`.msi`** — Standard Windows installer (recommended)
+            - **`.exe`** — NSIS installer
+
+            ### What's New
+            - Screen color picker with `Win+Shift+C` hotkey
+            - Copy colors as HEX, RGB, or HSL
+            - Persistent color history
+            - Custom cursor during pick mode
+            - Clean dark theme UI
+          releaseDraft: false
+          prerelease: false
