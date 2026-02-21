@@ -1,6 +1,6 @@
 {
   "name": "colorsnap",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Screen Color Picker - Pick colors from anywhere on screen",
   "type": "module",
   "scripts": {
