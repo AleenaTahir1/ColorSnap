@@ -263,7 +263,7 @@ pub fn run() {
             let pick_item = MenuItem::with_id(
                 app,
                 "pick",
-                &format!("Pick Color{tray_shortcut_text}"),
+                format!("Pick Color{tray_shortcut_text}"),
                 true,
                 None::<&str>,
             )?;
@@ -274,7 +274,7 @@ pub fn run() {
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .tooltip(&format!(
+                .tooltip(format!(
                     "ColorSnap{}",
                     if shortcut_label.is_empty() {
                         String::new()
