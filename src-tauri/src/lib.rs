@@ -20,11 +20,26 @@ static ACTIVE_SHORTCUT: Mutex<Option<(Shortcut, String)>> = Mutex::new(None);
 /// Candidate shortcuts to try in order of preference (all work on Win 10 & 11)
 fn pick_shortcut_candidates() -> Vec<(Shortcut, &'static str)> {
     vec![
-        (Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyC), "Win+Shift+C"),
-        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyC), "Ctrl+Shift+C"),
-        (Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyP), "Win+Shift+P"),
-        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyC), "Ctrl+Alt+C"),
-        (Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyC), "Win+Alt+C"),
+        (
+            Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyC),
+            "Win+Shift+C",
+        ),
+        (
+            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyC),
+            "Ctrl+Shift+C",
+        ),
+        (
+            Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyP),
+            "Win+Shift+P",
+        ),
+        (
+            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyC),
+            "Ctrl+Alt+C",
+        ),
+        (
+            Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyC),
+            "Win+Alt+C",
+        ),
     ]
 }
 
@@ -191,9 +206,7 @@ pub fn run() {
 
                     // Escape to cancel pick mode
                     let escape_shortcut = Shortcut::new(None, Code::Escape);
-                    if shortcut == &escape_shortcut
-                        && PICK_MODE_ACTIVE.load(Ordering::SeqCst)
-                    {
+                    if shortcut == &escape_shortcut && PICK_MODE_ACTIVE.load(Ordering::SeqCst) {
                         PICK_MODE_ACTIVE.store(false, Ordering::SeqCst);
                         color_picker::restore_default_cursor();
                         let _ = app.emit("pick-mode-stopped", ());
@@ -227,7 +240,9 @@ pub fn run() {
             }
 
             if shortcut_label.is_empty() {
-                eprintln!("No pick shortcut could be registered. Use the tray menu to pick colors.");
+                eprintln!(
+                    "No pick shortcut could be registered. Use the tray menu to pick colors."
+                );
             }
 
             // Register escape shortcut for cancelling pick mode
@@ -259,7 +274,14 @@ pub fn run() {
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .tooltip(&format!("ColorSnap{}", if shortcut_label.is_empty() { String::new() } else { format!(" - {} to pick color", shortcut_label) }))
+                .tooltip(&format!(
+                    "ColorSnap{}",
+                    if shortcut_label.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" - {} to pick color", shortcut_label)
+                    }
+                ))
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => {
                         // Restore cursor before quitting
