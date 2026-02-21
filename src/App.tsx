@@ -16,6 +16,7 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [shortcutLabel, setShortcutLabel] = useState("");
   const {
     colors,
     isLoading,
@@ -43,6 +44,11 @@ function App() {
       unlistenPicked.then((fn) => fn());
     };
   }, [addColor, format]);
+
+  // Fetch the active shortcut label from backend
+  useEffect(() => {
+    invoke<string>("get_active_shortcut").then(setShortcutLabel).catch(() => {});
+  }, []);
 
   // Track maximize state
   useEffect(() => {
@@ -142,9 +148,11 @@ function App() {
           className="w-full py-3.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[var(--accent-border)] rounded-xl font-medium text-[15px] transition-all duration-200 flex items-center justify-center gap-2.5 group active:scale-[0.98]"
         >
           <span>Pick a Color</span>
-          <span className="text-[10px] text-[var(--text-muted)] font-mono ml-1">
-            Win+Shift+C
-          </span>
+          {shortcutLabel && (
+            <span className="text-[10px] text-[var(--text-muted)] font-mono ml-1">
+              {shortcutLabel}
+            </span>
+          )}
         </button>
 
         {/* Display Color */}

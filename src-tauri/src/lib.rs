@@ -3,6 +3,7 @@ mod storage;
 
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -12,6 +13,20 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 
 // Global state for pick mode
 static PICK_MODE_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+// Stores the registered pick shortcut and its display label
+static ACTIVE_SHORTCUT: Mutex<Option<(Shortcut, String)>> = Mutex::new(None);
+
+/// Candidate shortcuts to try in order of preference (all work on Win 10 & 11)
+fn pick_shortcut_candidates() -> Vec<(Shortcut, &'static str)> {
+    vec![
+        (Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyC), "Win+Shift+C"),
+        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyC), "Ctrl+Shift+C"),
+        (Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyP), "Win+Shift+P"),
+        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyC), "Ctrl+Alt+C"),
+        (Shortcut::new(Some(Modifiers::SUPER | Modifiers::ALT), Code::KeyC), "Win+Alt+C"),
+    ]
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColorInfo {
@@ -101,6 +116,15 @@ fn is_pick_mode_active() -> bool {
 }
 
 #[tauri::command]
+fn get_active_shortcut() -> String {
+    ACTIVE_SHORTCUT
+        .lock()
+        .ok()
+        .and_then(|guard| guard.as_ref().map(|(_, label)| label.clone()))
+        .unwrap_or_default()
+}
+
+#[tauri::command]
 fn pick_color_now(app: tauri::AppHandle) -> Result<ColorInfo, String> {
     // Get the color at current cursor position
     let color = color_picker::get_color_at_cursor()?;
@@ -131,22 +155,24 @@ pub fn run() {
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
-                    // Win+Shift+C to toggle pick mode or pick color
-                    let pick_shortcut =
-                        Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyC);
+                    if event.state != ShortcutState::Pressed {
+                        return;
+                    }
 
-                    if shortcut == &pick_shortcut && event.state == ShortcutState::Pressed {
+                    // Check if this is the active pick shortcut
+                    let is_pick = ACTIVE_SHORTCUT
+                        .lock()
+                        .ok()
+                        .and_then(|guard| guard.as_ref().map(|(s, _)| shortcut == s))
+                        .unwrap_or(false);
+
+                    if is_pick {
                         if PICK_MODE_ACTIVE.load(Ordering::SeqCst) {
                             // If already in pick mode, pick the color
                             if let Ok(color) = color_picker::get_color_at_cursor() {
                                 PICK_MODE_ACTIVE.store(false, Ordering::SeqCst);
-
-                                // Restore default cursor
                                 color_picker::restore_default_cursor();
-
                                 let _ = app.emit("color-picked", color);
-
-                                // Show window
                                 if let Some(window) = app.get_webview_window("main") {
                                     let _ = window.show();
                                     let _ = window.set_focus();
@@ -156,13 +182,9 @@ pub fn run() {
                             // Start pick mode
                             PICK_MODE_ACTIVE.store(true, Ordering::SeqCst);
                             let _ = app.emit("pick-mode-started", ());
-
-                            // Hide window
                             if let Some(window) = app.get_webview_window("main") {
                                 let _ = window.hide();
                             }
-
-                            // Set custom cursor
                             color_picker::set_pick_cursor();
                         }
                     }
@@ -170,17 +192,11 @@ pub fn run() {
                     // Escape to cancel pick mode
                     let escape_shortcut = Shortcut::new(None, Code::Escape);
                     if shortcut == &escape_shortcut
-                        && event.state == ShortcutState::Pressed
                         && PICK_MODE_ACTIVE.load(Ordering::SeqCst)
                     {
                         PICK_MODE_ACTIVE.store(false, Ordering::SeqCst);
-
-                        // Restore default cursor
                         color_picker::restore_default_cursor();
-
                         let _ = app.emit("pick-mode-stopped", ());
-
-                        // Show window
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
@@ -190,18 +206,52 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
-            // Register global shortcuts
-            let pick_shortcut =
-                Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyC);
-            app.global_shortcut().register(pick_shortcut)?;
+            // Restore cursor in case a previous instance was killed without cleanup
+            color_picker::restore_default_cursor_force();
 
+            // Try registering pick shortcut from candidates list
+            let mut shortcut_label = String::new();
+            for (shortcut, label) in pick_shortcut_candidates() {
+                let _ = app.global_shortcut().unregister(shortcut);
+                match app.global_shortcut().register(shortcut) {
+                    Ok(_) => {
+                        println!("Pick shortcut registered: {label}");
+                        shortcut_label = label.to_string();
+                        *ACTIVE_SHORTCUT.lock().unwrap() = Some((shortcut, label.to_string()));
+                        break;
+                    }
+                    Err(e) => {
+                        eprintln!("Shortcut {label} unavailable: {e}, trying next...");
+                    }
+                }
+            }
+
+            if shortcut_label.is_empty() {
+                eprintln!("No pick shortcut could be registered. Use the tray menu to pick colors.");
+            }
+
+            // Register escape shortcut for cancelling pick mode
             let escape_shortcut = Shortcut::new(None, Code::Escape);
-            app.global_shortcut().register(escape_shortcut)?;
+            let _ = app.global_shortcut().unregister(escape_shortcut);
+            match app.global_shortcut().register(escape_shortcut) {
+                Ok(_) => println!("Escape shortcut registered"),
+                Err(e) => eprintln!("Failed to register Escape shortcut: {e}"),
+            }
 
             // Setup system tray
+            let tray_shortcut_text = if shortcut_label.is_empty() {
+                String::new()
+            } else {
+                format!(" ({shortcut_label})")
+            };
             let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let pick_item =
-                MenuItem::with_id(app, "pick", "Pick Color (Win+Shift+C)", true, None::<&str>)?;
+            let pick_item = MenuItem::with_id(
+                app,
+                "pick",
+                &format!("Pick Color{tray_shortcut_text}"),
+                true,
+                None::<&str>,
+            )?;
             let show_item = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
 
             let menu = Menu::with_items(app, &[&pick_item, &show_item, &quit_item])?;
@@ -209,7 +259,7 @@ pub fn run() {
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .tooltip("ColorSnap - Win+Shift+C to pick color")
+                .tooltip(&format!("ColorSnap{}", if shortcut_label.is_empty() { String::new() } else { format!(" - {} to pick color", shortcut_label) }))
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => {
                         // Restore cursor before quitting
@@ -260,6 +310,7 @@ pub fn run() {
             stop_pick_mode,
             is_pick_mode_active,
             pick_color_now,
+            get_active_shortcut,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

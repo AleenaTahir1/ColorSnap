@@ -177,6 +177,21 @@ pub fn restore_default_cursor() {
     }
 }
 
+/// Force-restore the default system cursor unconditionally.
+/// Used on startup to recover from a previous crash/kill that left a custom cursor.
+#[cfg(windows)]
+pub fn restore_default_cursor_force() {
+    unsafe {
+        let _ = SystemParametersInfoW(
+            SPI_SETCURSORS,
+            0,
+            None,
+            SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0),
+        );
+    }
+    CURSOR_CHANGED.store(false, Ordering::SeqCst);
+}
+
 /// Capture a zoom preview around the cursor
 #[cfg(windows)]
 pub fn capture_zoom_preview(size: u32) -> Result<ZoomPreviewData, String> {
@@ -268,3 +283,6 @@ pub fn set_pick_cursor() {}
 
 #[cfg(not(windows))]
 pub fn restore_default_cursor() {}
+
+#[cfg(not(windows))]
+pub fn restore_default_cursor_force() {}
