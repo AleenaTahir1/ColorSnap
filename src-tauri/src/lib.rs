@@ -274,7 +274,11 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&pick_item, &show_item, &quit_item])?;
 
             let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().expect("bundle icon missing").clone())
+                .icon(
+                    app.default_window_icon()
+                        .expect("bundle icon missing")
+                        .clone(),
+                )
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .tooltip(format!(
