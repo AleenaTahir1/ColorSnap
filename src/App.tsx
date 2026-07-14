@@ -83,6 +83,14 @@ function App() {
     }
   }, []);
 
+  const handlePickArea = useCallback(async () => {
+    try {
+      await invoke("start_area_mode");
+    } catch (err) {
+      console.error("Failed to start area mode:", err);
+    }
+  }, []);
+
   const handleSelectFromHistory = useCallback((color: ColorEntry) => {
     setDisplayColor({ hex: color.hex, rgb: color.rgb });
   }, []);
@@ -179,18 +187,30 @@ function App() {
 
       {/* Main */}
       <main className="px-5 pb-5 space-y-3 flex-1 overflow-y-auto">
-        {/* Pick Button */}
-        <button
-          onClick={handlePickColor}
-          className="w-full py-3.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[var(--accent-border)] rounded-xl font-medium text-[15px] transition-all duration-200 flex items-center justify-center gap-2.5 group active:scale-[0.98]"
-        >
-          <span>Pick a Color</span>
-          {shortcutLabel && (
-            <span className="text-[10px] text-[var(--text-muted)] font-mono ml-1">
-              {shortcutLabel}
-            </span>
-          )}
-        </button>
+        {/* Pick actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={handlePickColor}
+            className="flex-1 py-3.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[var(--accent-border)] rounded-xl font-medium text-[15px] transition-all duration-200 flex items-center justify-center gap-2.5 group active:scale-[0.98]"
+          >
+            <span>Pick a Color</span>
+            {shortcutLabel && (
+              <span className="text-[10px] text-[var(--text-muted)] font-mono ml-1">
+                {shortcutLabel}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={handlePickArea}
+            title="Average a region"
+            className="px-3.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[var(--accent-border)] rounded-xl transition-all duration-200 flex items-center justify-center active:scale-[0.98] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8V5a2 2 0 012-2h3M16 3h3a2 2 0 012 2v3M21 16v3a2 2 0 01-2 2h-3M8 21H5a2 2 0 01-2-2v-3" />
+              <circle cx="12" cy="12" r="2.5" />
+            </svg>
+          </button>
+        </div>
 
         {/* Display Color */}
         {displayColor && (

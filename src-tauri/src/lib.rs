@@ -239,6 +239,72 @@ fn pick_color_now(app: tauri::AppHandle) -> Result<ColorInfo, String> {
     Ok(color)
 }
 
+#[tauri::command]
+fn cursor_screen_pos() -> Result<(i32, i32), String> {
+    color_picker::cursor_pos()
+}
+
+/// Show the fullscreen region overlay over the monitor under the cursor.
+#[tauri::command]
+fn start_area_mode(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+    let region = app
+        .get_webview_window("region")
+        .ok_or("region window missing")?;
+
+    let (cx, cy) = color_picker::cursor_pos().unwrap_or((0, 0));
+    if let Ok(Some(monitor)) = app.monitor_from_point(cx as f64, cy as f64) {
+        let _ = region.set_position(*monitor.position());
+        let _ = region.set_size(*monitor.size());
+    }
+    let _ = region.show();
+    let _ = region.set_focus();
+    Ok(())
+}
+
+#[tauri::command]
+fn cancel_area_mode(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(region) = app.get_webview_window("region") {
+        let _ = region.hide();
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+    Ok(())
+}
+
+/// Average the pixels in the dragged rectangle, close the overlay, and emit
+/// the result as a normal picked color.
+#[tauri::command]
+fn pick_area(
+    app: tauri::AppHandle,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+) -> Result<ColorInfo, String> {
+    let (r, g, b) = color_picker::average_area_color(x1, y1, x2, y2)?;
+    let color = ColorInfo {
+        hex: format!("#{:02X}{:02X}{:02X}", r, g, b),
+        rgb: [r, g, b],
+        x: (x1 + x2) / 2,
+        y: (y1 + y2) / 2,
+    };
+
+    if let Some(region) = app.get_webview_window("region") {
+        let _ = region.hide();
+    }
+    let _ = app.emit("color-picked", color.clone());
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+    Ok(color)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -344,6 +410,23 @@ pub fn run() {
             .build()?;
             let _ = loupe.set_ignore_cursor_events(true);
 
+            // Fullscreen transparent overlay for area (drag-to-average) picking
+            let _region = tauri::WebviewWindowBuilder::new(
+                app,
+                "region",
+                tauri::WebviewUrl::App("index.html".into()),
+            )
+            .title("Pixnib Region")
+            .inner_size(800.0, 600.0)
+            .decorations(false)
+            .resizable(false)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .visible(false)
+            .transparent(true)
+            .shadow(false)
+            .build()?;
+
             // Setup system tray
             let tray_shortcut_text = if shortcut_label.is_empty() {
                 String::new()
@@ -427,6 +510,10 @@ pub fn run() {
             get_active_shortcut,
             list_shortcut_options,
             set_pick_shortcut,
+            cursor_screen_pos,
+            start_area_mode,
+            cancel_area_mode,
+            pick_area,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

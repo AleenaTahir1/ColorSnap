@@ -265,6 +265,78 @@ pub fn capture_loupe_grid(grid: u32) -> Result<LoupeData, String> {
     }
 }
 
+/// Current physical cursor position in screen coordinates.
+#[cfg(windows)]
+pub fn cursor_pos() -> Result<(i32, i32), String> {
+    get_cursor_position()
+}
+
+/// Average color of all pixels in the rectangle bounded by two screen points.
+/// A single BitBlt of the bounding box keeps this fast even for large regions.
+#[cfg(windows)]
+pub fn average_area_color(x1: i32, y1: i32, x2: i32, y2: i32) -> Result<(u8, u8, u8), String> {
+    use std::ffi::c_void;
+
+    let left = x1.min(x2);
+    let top = y1.min(y2);
+    let w = (x1 - x2).abs().max(1).min(4096);
+    let h = (y1 - y2).abs().max(1).min(4096);
+
+    unsafe {
+        let screen_dc = GetDC(None);
+        if screen_dc.is_invalid() {
+            return Err("Failed to get screen device context".to_string());
+        }
+        let mem_dc = CreateCompatibleDC(screen_dc);
+
+        let mut bmi: BITMAPINFO = std::mem::zeroed();
+        bmi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
+        bmi.bmiHeader.biWidth = w;
+        bmi.bmiHeader.biHeight = -h; // negative = top-down
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = 0; // BI_RGB
+
+        let mut bits_ptr: *mut c_void = std::ptr::null_mut();
+        let bmp = CreateDIBSection(screen_dc, &bmi, DIB_RGB_COLORS, &mut bits_ptr, None, 0)
+            .map_err(|e| {
+                let _ = DeleteDC(mem_dc);
+                ReleaseDC(None, screen_dc);
+                format!("Failed to create DIB section: {}", e)
+            })?;
+
+        let old_bmp = SelectObject(mem_dc, bmp);
+        let blit = BitBlt(mem_dc, 0, 0, w, h, screen_dc, left, top, SRCCOPY);
+
+        let (mut r_sum, mut g_sum, mut b_sum) = (0u64, 0u64, 0u64);
+        let count = (w * h) as u64;
+        if blit.is_ok() && !bits_ptr.is_null() {
+            let px = std::slice::from_raw_parts(bits_ptr as *const u8, (w * h * 4) as usize);
+            for i in 0..(w * h) as usize {
+                // DIB sections are BGRA
+                b_sum += px[i * 4] as u64;
+                g_sum += px[i * 4 + 1] as u64;
+                r_sum += px[i * 4 + 2] as u64;
+            }
+        }
+
+        SelectObject(mem_dc, old_bmp);
+        let _ = DeleteObject(bmp);
+        let _ = DeleteDC(mem_dc);
+        ReleaseDC(None, screen_dc);
+
+        if !blit.is_ok() {
+            return Err("Failed to capture area".to_string());
+        }
+
+        Ok((
+            (r_sum / count) as u8,
+            (g_sum / count) as u8,
+            (b_sum / count) as u8,
+        ))
+    }
+}
+
 // Non-Windows fallback implementations
 #[cfg(not(windows))]
 pub fn get_color_at_cursor() -> Result<ColorInfo, String> {
@@ -274,6 +346,16 @@ pub fn get_color_at_cursor() -> Result<ColorInfo, String> {
 #[cfg(not(windows))]
 pub fn capture_loupe_grid(_grid: u32) -> Result<LoupeData, String> {
     Err("Loupe capture is only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+pub fn cursor_pos() -> Result<(i32, i32), String> {
+    Err("Area picking is only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+pub fn average_area_color(_x1: i32, _y1: i32, _x2: i32, _y2: i32) -> Result<(u8, u8, u8), String> {
+    Err("Area picking is only supported on Windows".to_string())
 }
 
 #[cfg(not(windows))]

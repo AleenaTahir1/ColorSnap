@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "windows": ["main", "picker", "loupe"],
+  "windows": ["main", "picker", "loupe", "region"],
   "permissions": [
     "core:default",
     "core:window:default",
