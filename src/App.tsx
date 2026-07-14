@@ -7,6 +7,7 @@ import { ColorHistory } from "./components/ColorHistory";
 import { CodeSnippets } from "./components/CodeSnippets";
 import { ContrastChecker } from "./components/ContrastChecker";
 import { ShadeStrip } from "./components/ShadeStrip";
+import { Settings } from "./components/Settings";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import { useColorHistory } from "./hooks/useColorHistory";
 import { ColorInfo, ColorEntry, ColorFormat } from "./types/color";
@@ -16,11 +17,19 @@ const appWindow = getCurrentWindow();
 
 function App() {
   const [displayColor, setDisplayColor] = useState<{ hex: string; rgb: [number, number, number] } | null>(null);
-  const [format] = useState<ColorFormat>("hex");
+  const [format, setFormat] = useState<ColorFormat>(
+    () => (localStorage.getItem("pixnib-default-format") as ColorFormat) || "hex"
+  );
   const [copied, setCopied] = useState(false);
   const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [shortcutLabel, setShortcutLabel] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const handleFormatChange = useCallback((f: ColorFormat) => {
+    setFormat(f);
+    localStorage.setItem("pixnib-default-format", f);
+  }, []);
   const {
     colors,
     isLoading,
@@ -110,6 +119,16 @@ function App() {
 
         {/* Right: Window Controls */}
         <div data-window-controls className="flex items-center gap-0.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); setSettingsOpen(true); }}
+            title="Settings"
+            className="w-7 h-7 flex items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors duration-100 mr-1"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
+              <circle cx="12" cy="12" r="3" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); appWindow.minimize(); }}
             className="w-7 h-7 flex items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors duration-100"
@@ -229,6 +248,15 @@ function App() {
           Copied to clipboard
         </div>
       )}
+
+      {/* Settings */}
+      <Settings
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        defaultFormat={format}
+        onDefaultFormatChange={handleFormatChange}
+        onShortcutChange={setShortcutLabel}
+      />
 
       {/* Update prompt */}
       <UpdatePrompt />

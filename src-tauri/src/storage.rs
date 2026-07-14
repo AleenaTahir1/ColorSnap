@@ -1,10 +1,18 @@
 use crate::ColorEntry;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::Manager;
 
 const HISTORY_FILE: &str = "color_history.json";
+const SETTINGS_FILE: &str = "settings.json";
 
-fn get_storage_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AppSettings {
+    /// Shortcut label the user chose in settings (tried first on startup)
+    pub preferred_shortcut: Option<String>,
+}
+
+fn app_data_file(app: &tauri::AppHandle, name: &str) -> Result<PathBuf, String> {
     let app_data_dir = app
         .path()
         .app_data_dir()
@@ -14,7 +22,27 @@ fn get_storage_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     std::fs::create_dir_all(&app_data_dir)
         .map_err(|e| format!("Failed to create app data directory: {}", e))?;
 
-    Ok(app_data_dir.join(HISTORY_FILE))
+    Ok(app_data_dir.join(name))
+}
+
+fn get_storage_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    app_data_file(app, HISTORY_FILE)
+}
+
+pub fn save_settings(app: &tauri::AppHandle, settings: &AppSettings) -> Result<(), String> {
+    let path = app_data_file(app, SETTINGS_FILE)?;
+    let json = serde_json::to_string_pretty(settings)
+        .map_err(|e| format!("Failed to serialize settings: {}", e))?;
+    std::fs::write(&path, json).map_err(|e| format!("Failed to write settings file: {}", e))
+}
+
+pub fn load_settings(app: &tauri::AppHandle) -> AppSettings {
+    app_data_file(app, SETTINGS_FILE)
+        .ok()
+        .filter(|path| path.exists())
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .and_then(|json| serde_json::from_str(&json).ok())
+        .unwrap_or_default()
 }
 
 pub async fn save_color_history(

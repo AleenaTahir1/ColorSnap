@@ -172,6 +172,50 @@ fn get_active_shortcut() -> String {
 }
 
 #[tauri::command]
+fn list_shortcut_options() -> Vec<String> {
+    pick_shortcut_candidates()
+        .into_iter()
+        .map(|(_, label)| label.to_string())
+        .collect()
+}
+
+/// Switch the global pick shortcut, persisting the choice. Rolls back to the
+/// previous shortcut if the requested one cannot be registered.
+#[tauri::command]
+fn set_pick_shortcut(app: tauri::AppHandle, label: String) -> Result<String, String> {
+    let (shortcut, name) = pick_shortcut_candidates()
+        .into_iter()
+        .find(|(_, l)| *l == label)
+        .ok_or_else(|| format!("Unknown shortcut: {label}"))?;
+
+    let previous = ACTIVE_SHORTCUT.lock().unwrap().clone();
+    if let Some((old, _)) = &previous {
+        let _ = app.global_shortcut().unregister(*old);
+    }
+
+    match app.global_shortcut().register(shortcut) {
+        Ok(_) => {
+            *ACTIVE_SHORTCUT.lock().unwrap() = Some((shortcut, name.to_string()));
+            let _ = storage::save_settings(
+                &app,
+                &storage::AppSettings {
+                    preferred_shortcut: Some(name.to_string()),
+                },
+            );
+            Ok(name.to_string())
+        }
+        Err(e) => {
+            if let Some((old, old_label)) = previous {
+                if app.global_shortcut().register(old).is_ok() {
+                    *ACTIVE_SHORTCUT.lock().unwrap() = Some((old, old_label));
+                }
+            }
+            Err(format!("{name} is unavailable: {e}"))
+        }
+    }
+}
+
+#[tauri::command]
 fn pick_color_now(app: tauri::AppHandle) -> Result<ColorInfo, String> {
     let color = color_picker::get_color_at_cursor()?;
     exit_pick_mode(&app, Some(color.clone()));
@@ -183,6 +227,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(
@@ -222,9 +270,16 @@ pub fn run() {
             // Restore cursor in case a previous instance was killed without cleanup
             color_picker::restore_default_cursor_force();
 
-            // Try registering pick shortcut from candidates list
+            // Try registering pick shortcut from candidates, preferred one first
+            let mut candidates = pick_shortcut_candidates();
+            if let Some(pref) = storage::load_settings(app.handle()).preferred_shortcut {
+                if let Some(pos) = candidates.iter().position(|(_, l)| *l == pref) {
+                    let preferred = candidates.remove(pos);
+                    candidates.insert(0, preferred);
+                }
+            }
             let mut shortcut_label = String::new();
-            for (shortcut, label) in pick_shortcut_candidates() {
+            for (shortcut, label) in candidates {
                 let _ = app.global_shortcut().unregister(shortcut);
                 match app.global_shortcut().register(shortcut) {
                     Ok(_) => {
@@ -351,6 +406,8 @@ pub fn run() {
             is_pick_mode_active,
             pick_color_now,
             get_active_shortcut,
+            list_shortcut_options,
+            set_pick_shortcut,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
