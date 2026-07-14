@@ -245,11 +245,15 @@ fn cursor_screen_pos() -> Result<(i32, i32), String> {
 }
 
 /// Show the fullscreen region overlay over the monitor under the cursor.
+/// Snapshots the screen first so the overlay tint never taints the average.
 #[tauri::command]
 fn start_area_mode(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
     }
+    // Capture the clean screen before the overlay appears
+    color_picker::capture_area_snapshot()?;
+
     let region = app
         .get_webview_window("region")
         .ok_or("region window missing")?;
@@ -266,6 +270,7 @@ fn start_area_mode(app: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 fn cancel_area_mode(app: tauri::AppHandle) -> Result<(), String> {
+    color_picker::clear_area_snapshot();
     if let Some(region) = app.get_webview_window("region") {
         let _ = region.hide();
     }
@@ -287,6 +292,7 @@ fn pick_area(
     y2: i32,
 ) -> Result<ColorInfo, String> {
     let (r, g, b) = color_picker::average_area_color(x1, y1, x2, y2)?;
+    color_picker::clear_area_snapshot();
     let color = ColorInfo {
         hex: format!("#{:02X}{:02X}{:02X}", r, g, b),
         rgb: [r, g, b],

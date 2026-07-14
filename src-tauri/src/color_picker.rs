@@ -1,7 +1,22 @@
 use crate::{ColorInfo, LoupeData};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 
 static CURSOR_CHANGED: AtomicBool = AtomicBool::new(false);
+
+/// Full-virtual-screen snapshot taken when area mode starts, so the selection
+/// overlay tint is never part of the averaged region. Pixels are BGRA.
+#[cfg(windows)]
+struct AreaSnapshot {
+    pixels: Vec<u8>,
+    width: i32,
+    height: i32,
+    origin_x: i32,
+    origin_y: i32,
+}
+
+#[cfg(windows)]
+static AREA_SNAPSHOT: Mutex<Option<AreaSnapshot>> = Mutex::new(None);
 
 #[cfg(windows)]
 use windows::Win32::{
@@ -12,8 +27,9 @@ use windows::Win32::{
         DIB_RGB_COLORS, SRCCOPY,
     },
     UI::WindowsAndMessaging::{
-        CreateIconIndirect, GetCursorPos, SetSystemCursor, SystemParametersInfoW, HCURSOR,
-        ICONINFO, OCR_NORMAL, SPI_SETCURSORS, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS,
+        CreateIconIndirect, GetCursorPos, GetSystemMetrics, SetSystemCursor, SystemParametersInfoW,
+        HCURSOR, ICONINFO, OCR_NORMAL, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN, SM_XVIRTUALSCREEN,
+        SM_YVIRTUALSCREEN, SPI_SETCURSORS, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS,
     },
 };
 
@@ -271,18 +287,18 @@ pub fn cursor_pos() -> Result<(i32, i32), String> {
     get_cursor_position()
 }
 
-/// Average color of all pixels in the rectangle bounded by two screen points.
-/// A single BitBlt of the bounding box keeps this fast even for large regions.
+/// Capture the entire virtual screen into a snapshot. Called the instant before
+/// the selection overlay is shown, so the overlay's dark tint is never captured.
 #[cfg(windows)]
-pub fn average_area_color(x1: i32, y1: i32, x2: i32, y2: i32) -> Result<(u8, u8, u8), String> {
+pub fn capture_area_snapshot() -> Result<(), String> {
     use std::ffi::c_void;
 
-    let left = x1.min(x2);
-    let top = y1.min(y2);
-    let w = (x1 - x2).abs().clamp(1, 4096);
-    let h = (y1 - y2).abs().clamp(1, 4096);
-
     unsafe {
+        let origin_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        let origin_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        let width = GetSystemMetrics(SM_CXVIRTUALSCREEN).max(1);
+        let height = GetSystemMetrics(SM_CYVIRTUALSCREEN).max(1);
+
         let screen_dc = GetDC(None);
         if screen_dc.is_invalid() {
             return Err("Failed to get screen device context".to_string());
@@ -291,8 +307,8 @@ pub fn average_area_color(x1: i32, y1: i32, x2: i32, y2: i32) -> Result<(u8, u8,
 
         let mut bmi: BITMAPINFO = std::mem::zeroed();
         bmi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
-        bmi.bmiHeader.biWidth = w;
-        bmi.bmiHeader.biHeight = -h; // negative = top-down
+        bmi.bmiHeader.biWidth = width;
+        bmi.bmiHeader.biHeight = -height; // top-down
         bmi.bmiHeader.biPlanes = 1;
         bmi.bmiHeader.biBitCount = 32;
         bmi.bmiHeader.biCompression = 0; // BI_RGB
@@ -306,18 +322,15 @@ pub fn average_area_color(x1: i32, y1: i32, x2: i32, y2: i32) -> Result<(u8, u8,
             })?;
 
         let old_bmp = SelectObject(mem_dc, bmp);
-        let blit = BitBlt(mem_dc, 0, 0, w, h, screen_dc, left, top, SRCCOPY);
+        let blit = BitBlt(
+            mem_dc, 0, 0, width, height, screen_dc, origin_x, origin_y, SRCCOPY,
+        );
 
-        let (mut r_sum, mut g_sum, mut b_sum) = (0u64, 0u64, 0u64);
-        let count = (w * h) as u64;
+        let mut pixels = Vec::new();
         if blit.is_ok() && !bits_ptr.is_null() {
-            let px = std::slice::from_raw_parts(bits_ptr as *const u8, (w * h * 4) as usize);
-            for i in 0..(w * h) as usize {
-                // DIB sections are BGRA
-                b_sum += px[i * 4] as u64;
-                g_sum += px[i * 4 + 1] as u64;
-                r_sum += px[i * 4 + 2] as u64;
-            }
+            let px =
+                std::slice::from_raw_parts(bits_ptr as *const u8, (width * height * 4) as usize);
+            pixels = px.to_vec();
         }
 
         SelectObject(mem_dc, old_bmp);
@@ -325,16 +338,60 @@ pub fn average_area_color(x1: i32, y1: i32, x2: i32, y2: i32) -> Result<(u8, u8,
         let _ = DeleteDC(mem_dc);
         ReleaseDC(None, screen_dc);
 
-        if blit.is_err() {
-            return Err("Failed to capture area".to_string());
+        if pixels.is_empty() {
+            return Err("Failed to capture screen snapshot".to_string());
         }
 
-        Ok((
-            (r_sum / count) as u8,
-            (g_sum / count) as u8,
-            (b_sum / count) as u8,
-        ))
+        *AREA_SNAPSHOT.lock().unwrap() = Some(AreaSnapshot {
+            pixels,
+            width,
+            height,
+            origin_x,
+            origin_y,
+        });
+        Ok(())
     }
+}
+
+/// Average the pixels of the rectangle (two screen points) from the snapshot
+/// captured at area-mode start. Falls back to an error if no snapshot exists.
+#[cfg(windows)]
+pub fn average_area_color(x1: i32, y1: i32, x2: i32, y2: i32) -> Result<(u8, u8, u8), String> {
+    let guard = AREA_SNAPSHOT.lock().unwrap();
+    let snap = guard.as_ref().ok_or("No screen snapshot available")?;
+
+    // Convert screen coords to snapshot-relative, clamp to bounds
+    let sx1 = (x1.min(x2) - snap.origin_x).clamp(0, snap.width - 1);
+    let sy1 = (y1.min(y2) - snap.origin_y).clamp(0, snap.height - 1);
+    let sx2 = (x1.max(x2) - snap.origin_x).clamp(0, snap.width - 1);
+    let sy2 = (y1.max(y2) - snap.origin_y).clamp(0, snap.height - 1);
+
+    let (mut r_sum, mut g_sum, mut b_sum, mut count) = (0u64, 0u64, 0u64, 0u64);
+    for y in sy1..=sy2 {
+        for x in sx1..=sx2 {
+            let i = ((y * snap.width + x) * 4) as usize;
+            // BGRA
+            b_sum += snap.pixels[i] as u64;
+            g_sum += snap.pixels[i + 1] as u64;
+            r_sum += snap.pixels[i + 2] as u64;
+            count += 1;
+        }
+    }
+
+    if count == 0 {
+        return Err("Empty selection".to_string());
+    }
+    Ok((
+        (r_sum / count) as u8,
+        (g_sum / count) as u8,
+        (b_sum / count) as u8,
+    ))
+}
+
+/// Drop the snapshot when area mode ends, freeing the buffer.
+#[cfg(windows)]
+pub fn clear_area_snapshot() {
+    *AREA_SNAPSHOT.lock().unwrap() = None;
 }
 
 // Non-Windows fallback implementations
@@ -354,9 +411,17 @@ pub fn cursor_pos() -> Result<(i32, i32), String> {
 }
 
 #[cfg(not(windows))]
+pub fn capture_area_snapshot() -> Result<(), String> {
+    Err("Area picking is only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
 pub fn average_area_color(_x1: i32, _y1: i32, _x2: i32, _y2: i32) -> Result<(u8, u8, u8), String> {
     Err("Area picking is only supported on Windows".to_string())
 }
+
+#[cfg(not(windows))]
+pub fn clear_area_snapshot() {}
 
 #[cfg(not(windows))]
 pub fn set_pick_cursor() {}
