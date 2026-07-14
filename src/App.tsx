@@ -5,6 +5,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { ColorHistory } from "./components/ColorHistory";
 import { CodeSnippets } from "./components/CodeSnippets";
+import { ContrastChecker } from "./components/ContrastChecker";
 import { ShadeStrip } from "./components/ShadeStrip";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import { useColorHistory } from "./hooks/useColorHistory";
@@ -206,6 +207,9 @@ function App() {
             <ShadeStrip rgb={displayColor.rgb} />
           </div>
         )}
+
+        {/* Contrast checker */}
+        <ContrastChecker current={displayColor?.hex ?? null} history={colors} />
 
         {/* Color History */}
         <ColorHistory
