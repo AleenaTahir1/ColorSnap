@@ -69,7 +69,7 @@ export function UpdatePrompt() {
           </p>
           <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
             {error
-              ? "Hmm, that didn't work — check your connection and try again."
+              ? "Hmm, that didn't work. Check your connection and try again."
               : `Pixnib v${update.version} is ready with new goodies inside.`}
           </p>
 

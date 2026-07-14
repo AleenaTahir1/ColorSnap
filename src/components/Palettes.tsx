@@ -107,7 +107,7 @@ export function Palettes({ open, onClose, current }: PalettesProps) {
                 {palette.colors.map((hex) => (
                   <button
                     key={hex}
-                    title={`${hex} — click to remove`}
+                    title={`${hex} · click to remove`}
                     onClick={() => removeColorFromPalette(palette.id, hex)}
                     className="w-6 h-6 rounded-md border border-[var(--border-hover)] hover:scale-110 transition-transform duration-100 relative group"
                     style={{ backgroundColor: hex }}
@@ -121,7 +121,7 @@ export function Palettes({ open, onClose, current }: PalettesProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-[var(--text-muted)]">Empty — add the current color with “+ Add”.</p>
+              <p className="text-[11px] text-[var(--text-muted)]">Empty. Add the current color with “+ Add”.</p>
             )}
 
             {/* Export */}
