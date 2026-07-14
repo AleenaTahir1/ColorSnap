@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    colorsnap_lib::run()
+    pixnib_lib::run()
 }

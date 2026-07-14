@@ -275,7 +275,7 @@ pub fn run() {
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .tooltip(format!(
-                    "ColorSnap{}",
+                    "Pixnib{}",
                     if shortcut_label.is_empty() {
                         String::new()
                     } else {

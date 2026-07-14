@@ -1,6 +1,6 @@
-# Contributing to ColorSnap
+# Contributing to Pixnib
 
-Thank you for considering contributing to ColorSnap! Here's how you can help.
+Thank you for considering contributing to Pixnib! Here's how you can help.
 
 ## Code of Conduct
 
@@ -38,7 +38,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Environment:**
  - OS: [e.g., Windows 11]
- - ColorSnap Version: [e.g., 0.1.0]
+ - Pixnib Version: [e.g., 0.1.0]
 
 **Additional context**
 Add any other context about the problem here.
@@ -74,8 +74,8 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/ColorSnap.git
-cd ColorSnap
+git clone https://github.com/YOUR_USERNAME/Pixnib.git
+cd Pixnib
 
 # Install dependencies
 npm install
@@ -87,7 +87,7 @@ npm run tauri dev
 ### Project Structure
 
 ```
-ColorSnap/
+Pixnib/
 ├── src/                    # Frontend (React + TypeScript)
 │   ├── components/         # UI components
 │   ├── hooks/              # Custom hooks
@@ -157,4 +157,4 @@ Contributors will be recognized in:
 - The README.md file
 - Release notes
 
-Thank you for contributing to ColorSnap!
+Thank you for contributing to Pixnib!

@@ -1,16 +1,16 @@
 <div align="center">
 
-<img src="public/logo.svg" alt="ColorSnap Logo" width="120" />
+<img src="public/logo.svg" alt="Pixnib Logo" width="120" />
 
-# ColorSnap
+# Pixnib
 
 **Screen color picker for Windows**
 
 Pick any color from anywhere on your screen — not just browsers, not just apps.
 
-[![Release](https://img.shields.io/github/v/release/AleenaTahir1/ColorSnap)](https://github.com/AleenaTahir1/ColorSnap/releases)
-[![Build](https://img.shields.io/github/actions/workflow/status/AleenaTahir1/ColorSnap/ci.yml)](https://github.com/AleenaTahir1/ColorSnap/actions)
-[![License](https://img.shields.io/badge/license-Source%20Available-blue)](LICENSE.txt)
+[![Release](https://img.shields.io/github/v/release/AleenaTahir1/Pixnib)](https://github.com/AleenaTahir1/Pixnib/releases)
+[![Build](https://img.shields.io/github/actions/workflow/status/AleenaTahir1/Pixnib/ci.yml)](https://github.com/AleenaTahir1/Pixnib/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE.txt)
 
 </div>
 
@@ -22,7 +22,7 @@ You work with colors all day. Matching a client's brand color from a PDF. Grabbi
 
 **The problem?** Browser extensions only work in browsers. Figma's eyedropper only works in Figma. Every tool is trapped in its own sandbox.
 
-**ColorSnap breaks that wall.**
+**Pixnib breaks that wall.**
 
 Press `Win+Shift+C` and pick any color from anywhere — your desktop wallpaper, a video playing in VLC, a color in an email, a pixel in a game. Anywhere. The hex code is instantly copied to your clipboard.
 
@@ -31,7 +31,7 @@ No switching apps. No screenshots. No color conversion tools. Just point and pic
 ---
 
 <div align="center">
-<img src="screenshots/app.png" alt="ColorSnap App" width="380" />
+<img src="screenshots/app.png" alt="Pixnib App" width="380" />
 </div>
 
 ---
@@ -45,12 +45,25 @@ No switching apps. No screenshots. No color conversion tools. Just point and pic
 - **Auto-copy** — Color values are copied to clipboard automatically
 - **System tray** — Runs quietly in the background, always ready
 - **Dark theme** — Clean, minimal UI that stays out of your way
+- **Hotkey fallback** — If `Win+Shift+C` is taken by another app, Pixnib automatically registers the next available shortcut (`Ctrl+Shift+C`, `Win+Shift+P`, …) and shows you which one is active
+
+---
+
+## How is this different from PowerToys Color Picker?
+
+[PowerToys Color Picker](https://learn.microsoft.com/en-us/windows/powertoys/color-picker) is great — if you already run PowerToys, you may not need Pixnib. The honest differences:
+
+- **Standalone** — Pixnib is a single small app. You don't have to install and keep the whole PowerToys suite running to get a color picker.
+- **Focused UI** — One job, one window: pick, history, copy. No settings sprawl.
+- **Automatic hotkey fallback** — If `Win+Shift+C` is already taken on your machine, Pixnib walks a list of candidate shortcuts until one registers, and tells you which one you got.
+
+If you live in the full PowerToys suite already, stick with it. If you just want a color picker, Pixnib is the lighter option.
 
 ---
 
 ## Installation
 
-Download the latest release from the [Releases](https://github.com/AleenaTahir1/ColorSnap/releases) page:
+Download the latest release from the [Releases](https://github.com/AleenaTahir1/Pixnib/releases) page:
 
 - **`.msi`** — Standard Windows installer (recommended)
 - **`.exe`** — NSIS installer
@@ -95,8 +108,8 @@ Right-click any color from history to copy in different formats:
 ### Run Locally
 
 ```bash
-git clone https://github.com/AleenaTahir1/ColorSnap.git
-cd ColorSnap
+git clone https://github.com/AleenaTahir1/Pixnib.git
+cd Pixnib
 npm install
 npm run tauri dev
 ```
@@ -110,7 +123,7 @@ npm run tauri build
 ### Project Structure
 
 ```
-ColorSnap/
+Pixnib/
 ├── src/                    # Frontend (React + TypeScript)
 │   ├── components/         # UI components
 │   ├── hooks/              # Custom hooks
@@ -138,11 +151,7 @@ ColorSnap/
 
 ## License
 
-This project uses a **Source Available** license. See [LICENSE.txt](LICENSE.txt) for details.
-
-- Free for personal and educational use
-- Free to modify for personal use
-- Commercial use requires permission
+Pixnib is open source under the [MIT License](LICENSE.txt). Use it, modify it, ship it — personal or commercial, no permission needed.
 
 ---
 

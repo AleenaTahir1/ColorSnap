@@ -100,8 +100,8 @@ function App() {
       >
         {/* Left: Brand */}
         <div className="flex items-center gap-2.5 pointer-events-none">
-          <img src="/logo.svg" alt="ColorSnap" className="w-7 h-7" />
-          <h1 className="text-[16px] font-semibold tracking-tight">ColorSnap</h1>
+          <img src="/logo.svg" alt="Pixnib" className="w-7 h-7" />
+          <h1 className="text-[16px] font-semibold tracking-tight">Pixnib</h1>
         </div>
 
         {/* Right: Window Controls */}
