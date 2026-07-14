@@ -35,6 +35,40 @@ export function rgbToHsl(
   return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
 }
 
+export function hslToRgb(
+  h: number,
+  s: number,
+  l: number
+): [number, number, number] {
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) =>
+    l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [
+    Math.round(f(0) * 255),
+    Math.round(f(8) * 255),
+    Math.round(f(4) * 255),
+  ];
+}
+
+export function rgbToHex(rgb: [number, number, number]): string {
+  return `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+
+/** Lightness scale (tints → shades) of a color, keeping hue and saturation. */
+export function generateScale(
+  rgb: [number, number, number],
+  steps = 9
+): string[] {
+  const [h, s] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+  return Array.from({ length: steps }, (_, i) => {
+    const l = 90 - (i * 80) / (steps - 1); // 90% down to 10%
+    return rgbToHex(hslToRgb(h, s, l));
+  });
+}
+
 export function formatColor(
   rgb: [number, number, number],
   format: ColorFormat

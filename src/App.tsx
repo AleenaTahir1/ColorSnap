@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { ColorHistory } from "./components/ColorHistory";
+import { CodeSnippets } from "./components/CodeSnippets";
+import { ShadeStrip } from "./components/ShadeStrip";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import { useColorHistory } from "./hooks/useColorHistory";
 import { ColorInfo, ColorEntry, ColorFormat } from "./types/color";
@@ -196,6 +198,12 @@ function App() {
                 </button>
               ))}
             </div>
+
+            {/* Dev code snippets */}
+            <CodeSnippets rgb={displayColor.rgb} />
+
+            {/* Shades & tints */}
+            <ShadeStrip rgb={displayColor.rgb} />
           </div>
         )}
 
