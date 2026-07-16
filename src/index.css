@@ -15,11 +15,18 @@
   --accent: #5eead4;
   --accent-soft: rgba(94, 234, 212, 0.08);
   --accent-border: rgba(94, 234, 212, 0.25);
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.1);
+  --on-accent: #06302a;
+  /* Brand (from the Pixnib logo): indigo primary, pink secondary */
+  --brand: #6366f1;
+  --brand-hover: #7c83f7;
+  --brand-soft: rgba(99, 102, 241, 0.16);
+  --brand-border: rgba(99, 102, 241, 0.4);
+  --brand-2: #f472b6;
+  --on-brand: #ffffff;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(255, 255, 255, 0.13);
   --danger: #f87171;
   --danger-soft: rgba(248, 113, 113, 0.1);
-  --on-accent: #06302a;
 
   font-family: 'Outfit', system-ui, sans-serif;
   font-weight: 400;
@@ -30,23 +37,29 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Light theme: darker teal accent so it stays legible on white surfaces. */
+/* Warm cream light theme with clearly visible borders so cards read as cards. */
 :root[data-theme="light"] {
-  --bg-base: #f6f6f7;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f0f0f2;
-  --bg-hover: #e6e6ea;
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
+  --bg-base: #f4eee2;
+  --bg-surface: #fffdf7;
+  --bg-elevated: #efe7d6;
+  --bg-hover: #e6dcc7;
+  --text-primary: #2a2620;
+  --text-secondary: #5f574b;
+  --text-muted: #98907f;
   --accent: #0d9488;
-  --accent-soft: rgba(13, 148, 136, 0.1);
-  --accent-border: rgba(13, 148, 136, 0.3);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(0, 0, 0, 0.14);
-  --danger: #dc2626;
-  --danger-soft: rgba(220, 38, 38, 0.08);
+  --accent-soft: rgba(13, 148, 136, 0.12);
+  --accent-border: rgba(13, 148, 136, 0.4);
   --on-accent: #ffffff;
+  --brand: #5457e6;
+  --brand-hover: #4649d6;
+  --brand-soft: rgba(84, 87, 230, 0.12);
+  --brand-border: rgba(84, 87, 230, 0.4);
+  --brand-2: #db2f89;
+  --on-brand: #ffffff;
+  --border: rgba(42, 38, 32, 0.16);
+  --border-hover: rgba(42, 38, 32, 0.3);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
 }
 
 * {

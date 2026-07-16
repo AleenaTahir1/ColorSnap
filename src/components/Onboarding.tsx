@@ -82,7 +82,7 @@ export function Onboarding({ run, onDone }: OnboardingProps) {
             width: spot.width,
             height: spot.height,
             boxShadow: "0 0 0 9999px rgba(0,0,0,0.72)",
-            outline: "2px solid var(--accent)",
+            outline: "2px solid var(--brand)",
           }}
         />
       ) : (
@@ -112,7 +112,7 @@ export function Onboarding({ run, onDone }: OnboardingProps) {
               <span
                 key={i}
                 className={`w-1.5 h-1.5 rounded-full transition-colors duration-150 ${
-                  i === step ? "bg-[var(--accent)]" : "bg-[var(--bg-hover)]"
+                  i === step ? "bg-[var(--brand)]" : "bg-[var(--bg-hover)]"
                 }`}
               />
             ))}
@@ -128,7 +128,7 @@ export function Onboarding({ run, onDone }: OnboardingProps) {
             )}
             <button
               onClick={() => (isLast ? finish() : setStep((s) => s + 1))}
-              className="px-3 py-1 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-[11px] font-semibold hover:opacity-90 transition-opacity duration-100"
+              className="px-3 py-1 rounded-lg bg-[var(--brand)] text-[var(--on-brand)] text-[11px] font-semibold hover:bg-[var(--brand-hover)] transition-colors duration-100"
             >
               {isLast ? "Got it" : "Next"}
             </button>

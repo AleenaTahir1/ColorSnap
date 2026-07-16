@@ -88,7 +88,7 @@ export function Settings({
                 onClick={() => handleShortcut(label)}
                 className={`px-2.5 py-2 rounded-lg border font-mono text-[11px] transition-colors duration-100 ${
                   active === label
-                    ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                    ? "border-[var(--brand-border)] bg-[var(--brand-soft)] text-[var(--brand)]"
                     : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
                 }`}
               >
@@ -109,7 +109,7 @@ export function Settings({
                 onClick={() => onDefaultFormatChange(f)}
                 className={`flex-1 px-2.5 py-2 rounded-lg border text-[11px] font-medium uppercase transition-colors duration-100 ${
                   defaultFormat === f
-                    ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                    ? "border-[var(--brand-border)] bg-[var(--brand-soft)] text-[var(--brand)]"
                     : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
                 }`}
               >
@@ -130,7 +130,7 @@ export function Settings({
             aria-checked={autostart}
             onClick={() => handleAutostart(!autostart)}
             className={`relative w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0 ${
-              autostart ? "bg-[var(--accent)]" : "bg-[var(--bg-hover)]"
+              autostart ? "bg-[var(--brand)]" : "bg-[var(--bg-hover)]"
             }`}
           >
             <span
