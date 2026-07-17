@@ -68,6 +68,22 @@ pub struct Palette {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BrandColor {
+    pub role: String,
+    pub hex: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BrandKit {
+    pub name: String,
+    pub colors: Vec<BrandColor>,
+    pub heading_font: String,
+    pub body_font: String,
+    pub notes: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoupeData {
     pub colors: Vec<String>, // grid×grid hex values, row-major
     pub hex: String,         // center pixel
@@ -160,6 +176,22 @@ async fn save_palettes(app: tauri::AppHandle, palettes: Vec<Palette>) -> Result<
 #[tauri::command]
 async fn load_palettes(app: tauri::AppHandle) -> Result<Vec<Palette>, String> {
     Ok(storage::load_palettes(&app))
+}
+
+#[tauri::command]
+async fn save_brand_kit(app: tauri::AppHandle, kit: BrandKit) -> Result<(), String> {
+    storage::save_brand_kit(&app, &kit)
+}
+
+#[tauri::command]
+async fn load_brand_kit(app: tauri::AppHandle) -> Result<Option<BrandKit>, String> {
+    Ok(storage::load_brand_kit(&app))
+}
+
+/// Write text to a path chosen via the save dialog (used to export the brand sheet).
+#[tauri::command]
+fn write_file(path: String, contents: String) -> Result<(), String> {
+    std::fs::write(&path, contents).map_err(|e| format!("Failed to write file: {}", e))
 }
 
 #[tauri::command]
@@ -320,6 +352,7 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(
@@ -509,6 +542,9 @@ pub fn run() {
             load_color_history,
             save_palettes,
             load_palettes,
+            save_brand_kit,
+            load_brand_kit,
+            write_file,
             start_pick_mode,
             stop_pick_mode,
             is_pick_mode_active,

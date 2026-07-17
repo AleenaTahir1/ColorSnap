@@ -27,3 +27,16 @@ export interface LoupeData {
 }
 
 export type ColorFormat = "hex" | "rgb" | "rgba" | "hsl" | "css-var";
+
+export interface BrandColor {
+  role: string; // primary | secondary | accent | neutral | background
+  hex: string; // empty string = unassigned
+}
+
+export interface BrandKit {
+  name: string;
+  colors: BrandColor[];
+  headingFont: string;
+  bodyFont: string;
+  notes: string;
+}

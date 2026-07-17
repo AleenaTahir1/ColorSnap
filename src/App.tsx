@@ -10,6 +10,7 @@ import { ShadeStrip } from "./components/ShadeStrip";
 import { Settings } from "./components/Settings";
 import { Palettes } from "./components/Palettes";
 import { Themes } from "./components/Themes";
+import { BrandKit } from "./components/BrandKit";
 import { Onboarding } from "./components/Onboarding";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import { useColorHistory } from "./hooks/useColorHistory";
@@ -34,6 +35,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [palettesOpen, setPalettesOpen] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
+  const [brandKitOpen, setBrandKitOpen] = useState(false);
   const [detailTab, setDetailTab] = useState<"values" | "code" | "shades" | "contrast">("values");
   const [showOnboarding, setShowOnboarding] = useState(
     () => !localStorage.getItem("pixnib-onboarded")
@@ -48,6 +50,7 @@ function App() {
     setSettingsOpen(false);
     setPalettesOpen(false);
     setThemesOpen(false);
+    setBrandKitOpen(false);
     setShowOnboarding(true);
   }, []);
   const [theme, setTheme] = useState<"dark" | "light">(
@@ -203,6 +206,18 @@ function App() {
               <circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none" />
               <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
               <circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          {/* Brand Kit */}
+          <button
+            data-tour="brandkit"
+            onClick={(e) => { e.stopPropagation(); setBrandKitOpen(true); }}
+            title="Brand Kit"
+            className="w-7 h-7 flex items-center justify-center rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors duration-100"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 3l2.2 5.8L21 11l-5.8 2.2L13 19l-2.2-5.8L5 11l5.8-2.2L13 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v3M3.5 4.5h3M6 17v3M4.5 18.5h3" />
             </svg>
           </button>
           {/* Theme toggle */}
@@ -433,6 +448,14 @@ function App() {
 
       {/* Curated theme palettes */}
       <Themes open={themesOpen} onClose={() => setThemesOpen(false)} />
+
+      {/* Brand Kit */}
+      <BrandKit
+        open={brandKitOpen}
+        onClose={() => setBrandKitOpen(false)}
+        current={displayColor?.hex ?? null}
+        history={colors}
+      />
 
       {/* First-run guided tour */}
       <Onboarding run={showOnboarding} onDone={finishOnboarding} />

@@ -1,4 +1,4 @@
-use crate::{ColorEntry, Palette};
+use crate::{BrandKit, ColorEntry, Palette};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::Manager;
@@ -6,6 +6,7 @@ use tauri::Manager;
 const HISTORY_FILE: &str = "color_history.json";
 const SETTINGS_FILE: &str = "settings.json";
 const PALETTES_FILE: &str = "palettes.json";
+const BRAND_KIT_FILE: &str = "brand_kit.json";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppSettings {
@@ -60,6 +61,21 @@ pub fn load_palettes(app: &tauri::AppHandle) -> Vec<Palette> {
         .and_then(|path| std::fs::read_to_string(path).ok())
         .and_then(|json| serde_json::from_str(&json).ok())
         .unwrap_or_default()
+}
+
+pub fn save_brand_kit(app: &tauri::AppHandle, kit: &BrandKit) -> Result<(), String> {
+    let path = app_data_file(app, BRAND_KIT_FILE)?;
+    let json = serde_json::to_string_pretty(kit)
+        .map_err(|e| format!("Failed to serialize brand kit: {}", e))?;
+    std::fs::write(&path, json).map_err(|e| format!("Failed to write brand kit file: {}", e))
+}
+
+pub fn load_brand_kit(app: &tauri::AppHandle) -> Option<BrandKit> {
+    app_data_file(app, BRAND_KIT_FILE)
+        .ok()
+        .filter(|path| path.exists())
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .and_then(|json| serde_json::from_str(&json).ok())
 }
 
 pub async fn save_color_history(

@@ -11,6 +11,7 @@ const STEPS: Step[] = [
   { sel: '[data-tour="area"]', title: "Average an area", body: "Drag a rectangle to get the average color of a whole region — handy for photos and gradients." },
   { sel: '[data-tour="themes"]', title: "Theme palettes", body: "Browse ready-made designer palettes by mood, and copy or save the ones you like." },
   { sel: '[data-tour="palettes"]', title: "Your palettes", body: "Collect colors into named palettes and export them as CSS, SCSS, or JSON." },
+  { sel: '[data-tour="brandkit"]', title: "Brand Kit", body: "Turn your colors into a brand kit: roles, fonts, and a one-page sheet to send your team." },
   { sel: '[data-tour="theme"]', title: "Light or dark", body: "Switch the app between dark and light whenever you like." },
   { sel: '[data-tour="settings"]', title: "Settings", body: "Change your shortcut, default copy format, and launch-at-startup here." },
 ];
